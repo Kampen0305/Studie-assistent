@@ -1,0 +1,6 @@
+{
+  "name": "Studie Assistent",
+  "description": "Een AI-assistent voor MBO-studenten om vragen over hun studie te beantwoorden met behulp van jaarplannen, studiewijzers en opdrachten.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
