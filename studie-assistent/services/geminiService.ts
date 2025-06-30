@@ -1,11 +1,12 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const getAnswer = async (question: string, kennisbank: string): Promise<string> => {
   if (!process.env.API_KEY) {
     throw new Error("API-sleutel niet gevonden. Zorg ervoor dat de omgevingsvariabele is ingesteld.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
 
   const systemInstruction = `
     Je bent een vriendelijke en behulpzame studie-assistent voor MBO-studenten. 
@@ -17,31 +18,37 @@ export const getAnswer = async (question: string, kennisbank: string): Promise<s
     - Citeer nooit direct de Kennisbank, maar formuleer een antwoord in je eigen woorden op basis van de context.
   `;
 
-  const contents = `
-    # Kennisbank
+  const contents = [
+    {
+      role: "user",
+      parts: [
+        { text: `
+# Kennisbank
 
-    ${kennisbank}
+${kennisbank}
 
-    ---
+---
 
-    # Vraag van de student
-    
-    "${question}"
-  `;
-  
+# Vraag van de student
+
+"${question}"
+        ` }
+      ]
+    }
+  ];
+
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-04-17",
-      contents: contents,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.3, 
-        topP: 0.9,
+    const result = await model.generateContent({
+      contents,
+      generationConfig: {
+        temperature: 0.3,
+        topP: 0.9
       },
+      systemInstruction
     });
 
-    const responseText = response.text;
-    
+    const responseText = await result.response.text();
+
     if (!responseText) {
       throw new Error("Leeg antwoord ontvangen van de API.");
     }
